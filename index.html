@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<link rel="icon" href="eth.png" type="image">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Blockchain</title>
+
+    <link rel="stylesheet" type="text/css" href="main.css">
+    <link href="https://fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet">
+
+    <script src="./node_modules/web3/dist/web3.min.js"></script>
+
+</head>
+<center>
+<body>
+    <div class="container">
+        
+                <h1 color="white">Own your stock</h1>
+                
+                <span id="countIns"></span>
+        
+                <h2 id="instructor"></h2>
+                <span id="insTrans"></span>
+                <hr>
+        
+                <img id="loader" src="https://loading.io/spinners/double-ring/lg.double-ring-spinner.gif">
+        
+                <label for="fName" class="col-lg-2 control-label" ></label>
+                <input id="fName" type="text" placeholder="Your name"></br></br>
+        
+                <label for="lName" class="col-lg-2 control-label"></label>
+                <input id="lName" type="text" placeholder="Company"><br/>
+        
+                <label for="age" class="col-lg-2 control-label"></label>
+                <input id="age" type="text" placeholder="Price"><br/><br/>
+        
+                <button id="button">Buy stock</button>
+        
+            </div>
+
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+
+    <script>
+       
+       if (typeof web3 !== 'undefined') {
+            web3 = new Web3(web3.currentProvider);
+        } else {
+            // set the provider you want from Web3.providers
+            web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+        }
+
+        web3.eth.defaultAccount = web3.eth.accounts[0];
+        var CoursetroContract = web3.eth.contract([
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "instructorAccts",
+		"outputs": [
+			{
+				"name": "",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "getInstructors",
+		"outputs": [
+			{
+				"name": "",
+				"type": "address[]"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "_address",
+				"type": "address"
+			}
+		],
+		"name": "getInstructor",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			},
+			{
+				"name": "",
+				"type": "bytes16"
+			},
+			{
+				"name": "",
+				"type": "bytes16"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "countInstructors",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "fName",
+				"type": "bytes16"
+			},
+			{
+				"indexed": false,
+				"name": "lName",
+				"type": "bytes16"
+			},
+			{
+				"indexed": false,
+				"name": "age",
+				"type": "uint256"
+			}
+		],
+		"name": "instructorInfo",
+		"type": "event"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "_address",
+				"type": "address"
+			},
+			{
+				"name": "_age",
+				"type": "uint256"
+			},
+			{
+				"name": "_fName",
+				"type": "bytes16"
+			},
+			{
+				"name": "_lName",
+				"type": "bytes16"
+			}
+		],
+		"name": "setInstructor",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	}
+]);
+
+        var Coursetro = CoursetroContract.at('0x76bbfed33722800da35c6a626bf3e3c496c12b72');
+        console.log(Coursetro);
+
+       /* Coursetro.getInstructor(function(error, result){
+            if(!error)
+                {
+                    $("#instructor").html(result[0]+' ('+result[1]+' years old)');
+                    console.log(result);
+                }
+            else
+                console.error(error);
+        });*/
+
+        var instructorEvent = Coursetro.instructorInfo({}, 'latest');
+
+        instructorEvent.watch(function(error, result) {
+            if (result) {
+                if (result.blockHash != $("#insTrans").html())
+                     $("#loader").hide();
+ 
+                $("#insTrans").html('Block hash: ' + result.blockHash);
+                $("#instructor").html(web3.toAscii(result.args.fName) + ' ' + web3.toAscii(result.args.lName) + ' (' + result.args.age + ' years old)');
+            } else {
+                 $("#loader").hide();
+            }
+        });
+        Coursetro.countInstructors((err, res) => {
+           if (res)
+            $("#countIns").html(res.c + ' stocks sold');
+            
+       })
+
+       $("#button").click(function() {
+        $("#loader").show();
+       Coursetro.setInstructor(web3.eth.defaultAccount, $("#age").val(), $("#fName").val(), $("#lName").val(), (err, res) => {
+           if (err) {
+               $("#loader").hide();
+           }
+       });
+   });
+
+
+
+    </script>
+</center>
+</body>
+</html>
